@@ -1,6 +1,8 @@
 @tool
 class_name ValueJiggler extends Node
 
+const SUPPORTED_TYPES = [TYPE_INT, TYPE_FLOAT, TYPE_VECTOR2, TYPE_VECTOR2I, TYPE_VECTOR3, TYPE_VECTOR3I, TYPE_VECTOR4, TYPE_VECTOR4I]
+
 @export var target_node: Node:
 	get:
 		return target_node
@@ -40,6 +42,7 @@ var _jiggle_base
 @export var _max_value: float = 10.0
 
 var _inital_value
+var _initial_type: Variant.Type
 var _tween: Tween
 
 func _get_property_list():
@@ -74,6 +77,7 @@ func _ready() -> void:
 	
 	_get_property_list()
 	
+	print(false as float)
 	if !Engine.is_editor_hint():
 		_inital_value = target_node.get(_target_property)
 		_tween = _set_up_tween()
@@ -96,8 +100,8 @@ func _set_up_tween() -> Tween:
 		new_tween.tween_property(
 			target_node, 
 			_target_property,  
-			_inital_value + _randomized_property(typeof(_inital_value)) * _jiggle_strength,
-			_jiggle_duration).from(_inital_value)
+			 _inital_value + _randomized_property(typeof(_inital_value)) * _jiggle_strength,
+			_jiggle_duration)
 	
 	new_tween.finished.connect(func() -> void:
 		new_tween.stop()
@@ -108,7 +112,7 @@ func _set_up_tween() -> Tween:
 func _array_to_string(arr: Array[Dictionary], separator = ",") -> String:
 	var string: String = ""
 	for i: Dictionary in arr:
-		if i.get("usage") == PropertyUsageFlags.PROPERTY_USAGE_DEFAULT || i.get("usage") == PropertyUsageFlags.PROPERTY_USAGE_EDITOR:
+		if SUPPORTED_TYPES.has(i.get("type")) and (i.get("usage") == PropertyUsageFlags.PROPERTY_USAGE_DEFAULT || i.get("usage") == PropertyUsageFlags.PROPERTY_USAGE_EDITOR):
 			string += str(i.get("name")) + separator
 	return string
 
@@ -121,8 +125,6 @@ func _get_property_by_name(name :String) -> Dictionary:
 func _randomized_property(type: Variant.Type) -> Variant:
 	var prop = null
 	match type:
-		TYPE_BOOL:
-			prop = prop * randi_range(0, 1)
 		TYPE_INT:
 			prop = randi_range(_min_value, _max_value)
 		TYPE_FLOAT:
